@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shekinahman - Vind het nummer van Richard!</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: sans-serif;
+    background: #1a1a2e;
+    color: #fff;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.4s;
+  }
+
+  #app {
+    text-align: center;
+    width: 100%;
+    max-width: 700px;
+    padding: 2rem;
+  }
+
+  .title {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    letter-spacing: 1px;
+  }
+
+  .subtitle {
+    font-size: 1rem;
+    color: #a0aec0;
+    margin-bottom: 2.5rem;
+  }
+
+  .code-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 2rem;
+  }
+
+  .code-input {
+    width: 64px;
+    height: 80px;
+    font-size: 2.2rem;
+    font-weight: 700;
+    text-align: center;
+    background: #16213e;
+    border: 2px solid #0f3460;
+    border-radius: 12px;
+    color: #e94560;
+    text-transform: uppercase;
+    outline: none;
+    caret-color: transparent;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .code-input:focus {
+    border-color: #e94560;
+    box-shadow: 0 0 0 3px rgba(233,69,96,0.25);
+  }
+
+  .check-btn {
+    width: 64px;
+    height: 80px;
+    background: #e94560;
+    border: none;
+    border-radius: 12px;
+    color: #fff;
+    font-size: 2rem;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .check-btn:hover { background: #c73652; }
+  .check-btn:active { transform: scale(0.95); }
+
+  .hint {
+    font-size: 0.85rem;
+    color: #718096;
+  }
+
+  /* SUCCESS SCREEN */
+  #success-screen {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2rem;
+  }
+
+  .digit-reveal {
+    background: #16213e;
+    border: 2px solid #38a169;
+    border-radius: 20px;
+    padding: 2rem 3rem;
+    text-align: center;
+  }
+
+  .digit-label {
+    font-size: 1rem;
+    color: #68d391;
+    margin-bottom: 0.5rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .digit-position {
+    font-size: 1.1rem;
+    color: #a0aec0;
+    margin-bottom: 0.75rem;
+  }
+
+  .digit-number {
+    font-size: 6rem;
+    font-weight: 900;
+    color: #68d391;
+    line-height: 1;
+  }
+
+  .success-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #68d391;
+  }
+
+  /* ERROR SCREEN */
+  #error-screen {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1.5rem;
+  }
+
+  .error-x {
+    font-size: 8rem;
+    line-height: 1;
+    color: #fc8181;
+  }
+
+  .error-title {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #fc8181;
+  }
+
+  .error-sub {
+    font-size: 1rem;
+    color: #a0aec0;
+  }
+
+  .countdown {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #fc8181;
+  }
+
+  body.error-bg { background: #2d0000; }
+  body.success-bg { background: #003d1a; }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- MAIN SCREEN -->
+  <div id="main-screen">
+    <div class="title">Shekinahman zoekt Richard!</div>
+    <div class="subtitle">Voer de 6-tekens code in die je bij het spel hebt verdiend</div>
+    <div class="code-row">
+      <input class="code-input" maxlength="1" id="c0" autocomplete="off" inputmode="text">
+      <input class="code-input" maxlength="1" id="c1" autocomplete="off" inputmode="text">
+      <input class="code-input" maxlength="1" id="c2" autocomplete="off" inputmode="text">
+      <input class="code-input" maxlength="1" id="c3" autocomplete="off" inputmode="text">
+      <input class="code-input" maxlength="1" id="c4" autocomplete="off" inputmode="text">
+      <input class="code-input" maxlength="1" id="c5" autocomplete="off" inputmode="text">
+      <button class="check-btn" id="check-btn" title="Controleer code">&#10132;</button>
+    </div>
+    <div class="hint">Typ elk teken — het vak springt automatisch door</div>
+  </div>
+
+  <!-- SUCCESS SCREEN -->
+  <div id="success-screen">
+    <div class="success-title">Correcte code!</div>
+    <div class="digit-reveal">
+      <div class="digit-label">Cijfer van het telefoonnummer</div>
+      <div class="digit-position" id="digit-position"></div>
+      <div class="digit-number" id="digit-number"></div>
+    </div>
+    <div class="hint">Scherm gaat terug over <span id="success-countdown">5</span> seconden...</div>
+  </div>
+
+  <!-- ERROR SCREEN -->
+  <div id="error-screen">
+    <div class="error-x">&#10007;</div>
+    <div class="error-title">Foute code!</div>
+    <div class="error-sub">Probeer het opnieuw</div>
+    <div class="countdown" id="error-countdown">5</div>
+  </div>
+
+</div>
+
+<script>
+  const CODES = {
+    "ABC123": { position: 1, digit: "0" },
+    "XK9P2Q": { position: 2, digit: "6" },
+    "ZZFIRE": { position: 3, digit: "2" },
+    "KAMP77": { position: 4, digit: "4" },
+    "WATER5": { position: 5, digit: "8" },
+    "GROEN8": { position: 6, digit: "1" },
+    "TENTJE": { position: 7, digit: "3" },
+    "NR2024": { position: 8, digit: "5" },
+    "VUUR11": { position: 9, digit: "7" },
+    "WINAAR": { position: 10, digit: "9" }
+  };
+
+  const inputs = Array.from({length: 6}, (_, i) => document.getElementById('c' + i));
+  const checkBtn = document.getElementById('check-btn');
+  const mainScreen = document.getElementById('main-screen');
+  const successScreen = document.getElementById('success-screen');
+  const errorScreen = document.getElementById('error-screen');
+  const digitPosition = document.getElementById('digit-position');
+  const digitNumber = document.getElementById('digit-number');
+  const successCountdown = document.getElementById('success-countdown');
+  const errorCountdown = document.getElementById('error-countdown');
+
+  inputs.forEach((inp, i) => {
+    inp.addEventListener('input', e => {
+      let val = e.target.value.replace(/[^a-zA-Z0-9]/g, '').slice(-1).toUpperCase();
+      e.target.value = val;
+      if (val && i < 5) inputs[i + 1].focus();
+    });
+
+    inp.addEventListener('keydown', e => {
+      if (e.key === 'Backspace' && !e.target.value && i > 0) {
+        inputs[i - 1].focus();
+        inputs[i - 1].value = '';
+      }
+      if (e.key === 'Enter') checkCode();
+    });
+
+    inp.addEventListener('paste', e => {
+      e.preventDefault();
+      const pasted = (e.clipboardData.getData('text') || '').replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+      pasted.split('').slice(0, 6).forEach((ch, j) => {
+        if (inputs[j]) inputs[j].value = ch;
+      });
+      const last = Math.min(pasted.length, 5);
+      inputs[last].focus();
+    });
+  });
+
+  checkBtn.addEventListener('click', checkCode);
+
+  function getCode() {
+    return inputs.map(i => i.value).join('').toUpperCase();
+  }
+
+  function checkCode() {
+    const code = getCode();
+    if (code.length < 6) { inputs.find(i => !i.value)?.focus(); return; }
+
+    if (CODES[code]) {
+      showSuccess(CODES[code]);
+    } else {
+      showError();
+    }
+  }
+
+  function showSuccess(data) {
+    document.body.classList.add('success-bg');
+    mainScreen.style.display = 'none';
+    successScreen.style.display = 'flex';
+    digitPosition.textContent = 'Cijfer #' + data.position + ' van het telefoonnummer';
+    digitNumber.textContent = data.digit;
+    let secs = 5;
+    successCountdown.textContent = secs;
+    const t = setInterval(() => {
+      secs--;
+      successCountdown.textContent = secs;
+      if (secs <= 0) { clearInterval(t); resetScreen(); }
+    }, 1000);
+  }
+
+  function showError() {
+    document.body.classList.add('error-bg');
+    mainScreen.style.display = 'none';
+    errorScreen.style.display = 'flex';
+    let secs = 5;
+    errorCountdown.textContent = secs;
+    const t = setInterval(() => {
+      secs--;
+      errorCountdown.textContent = secs;
+      if (secs <= 0) { clearInterval(t); resetScreen(); }
+    }, 1000);
+  }
+
+  function resetScreen() {
+    document.body.classList.remove('error-bg', 'success-bg');
+    successScreen.style.display = 'none';
+    errorScreen.style.display = 'none';
+    mainScreen.style.display = 'block';
+    inputs.forEach(i => i.value = '');
+    inputs[0].focus();
+  }
+
+  inputs[0].focus();
+</script>
+</body>
+</html>
